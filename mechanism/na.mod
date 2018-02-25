@@ -110,6 +110,7 @@ PROCEDURE trates(v) {
 	FROM vmin TO vmax WITH 199
 
 	rates(v): not consistently executed from here if usetable == 1
+
         tadj = q10^((celsius - temp)/10)
         tinc = -dt * tadj
 

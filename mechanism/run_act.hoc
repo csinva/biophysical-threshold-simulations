@@ -24,7 +24,7 @@ if(stoch==1){
 }
 printf("intensity: %f",intensity)
 
-titrate=2
+titrate=2 // this is what sets it to run_act
 
 // run
 chdir("../")
