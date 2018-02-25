@@ -1,0 +1,23 @@
+objref p
+p=new PWManager() 
+
+t_stop_temp = tstop
+dt_temp = dt
+xopen("$(NEURONHOME)/lib/hoc/noload.hoc")
+tstop = t_stop_temp
+dt = dt_temp
+nrnmainmenu()
+
+
+/*----------------------------------------------
+  Function
+-----------------------------------------------*/
+
+proc Pyramidal(){
+  //p.hide(2)
+  forall delete_section()
+  xopen ("main.hoc")
+}
+
+Pyramidal()
+

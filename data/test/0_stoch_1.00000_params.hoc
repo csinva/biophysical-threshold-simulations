@@ -1,0 +1,91 @@
+cmd_trial_num = 0
+trials_per_sweep = 1000
+sweep = int(cmd_trial_num/trials_per_sweep) + 1
+strdef folder,stoch_str,v_str,cmd_str,titrate_str,titrate_final_str,chans_str
+
+//////////// normal /////////////
+tstop = 50+25      // ms
+stoch = 1           // 1 for stochastic
+intensity = 1   // nA
+dur = tstop
+gamma = 20e-12 // set pS/channel
+if(sweep==1){
+    intensity =.9
+    dur =30
+}
+if(sweep==2){
+    intensity = 0.68
+    dur = 13.86719
+}
+if(sweep==3){
+    intensity = 0.7
+    dur = 12.205
+}
+if(sweep==4){
+    intensity = 0.76
+    dur = 9.93652
+}
+if(sweep==5){
+    intensity = .82
+    dur = 8.49609
+}
+if(sweep==6){
+    intensity = .94
+    dur = 6.54297
+}
+if(sweep==77){
+    intensity = 1.06
+    dur = 5.38500
+}
+if(sweep==8){
+    intensity = 1.18
+    dur = 4.55322
+}
+if(sweep==9){
+    intensity = 1.30000
+    dur = 3.97644
+}
+folder = "traces"
+//////////////////////////////////
+
+//////////// titrate /////////////
+titrate = 0    // 1 for titrate
+double intensities[50]
+if(titrate==1){
+    max_recurs = 20
+    for i=0,25{
+        intensities[i]=.65+.002*i
+    }
+    for i=26,49{
+        intensities[i]=.7+.03*(i-26)
+    }
+    intensity = intensities[cmd_trial_num]
+    stoch = 1
+    folder = "titrate"
+}
+//////////////////////////////////
+
+
+// constant
+del = 50            // delay
+dt = 0.01 // ms
+soma_cm = .9
+
+// output
+stoch_str="det"
+if(stoch==1){
+    stoch_str="stoch"
+}
+printf("intensity: %f",intensity)
+sprint(v_str, "data/%s/%d_%s_%.5f_v.dat",folder,cmd_trial_num,stoch_str,intensity)
+sprint(chans_str, "data/%s/%d_%s_%.5f_chans.dat",folder,cmd_trial_num,stoch_str,intensity)
+sprint(titrate_str, "data/%s/%d_%s_%.5f_titrate.txt",folder,cmd_trial_num,stoch_str,intensity)
+sprint(titrate_final_str, "data/titrate/%d_%s_%.5f_titrate.out",cmd_trial_num,stoch_str,intensity)
+if(cmd_trial_num==0){
+    sprint(cmd_str, "cp mosinit.hoc ../data/%s/%d_%s_%.5f_params.hoc",folder,cmd_trial_num,stoch_str,intensity)
+    system(cmd_str)
+}
+
+// run
+chdir("../")
+load_file("init.hoc")

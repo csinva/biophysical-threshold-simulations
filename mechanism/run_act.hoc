@@ -1,0 +1,31 @@
+cmd_trial_num = 0
+trials_per_sweep = 1000
+sweep = int(cmd_trial_num/trials_per_sweep) + 1
+strdef folder,stoch_str,v_str,cmd_str,titrate_str,titrate_final_str,chans_str
+
+//////////// normal /////////////
+tstop = 50+25      // ms
+stoch = 0           // 1 for stochastic
+intensity = 1   // nA
+dur = tstop
+gamma = 10e-12 // set pS/channel
+
+folder = "test"
+
+// constant
+del = 50            // delay
+dt = 0.01 // ms
+soma_cm = .9
+
+// output
+stoch_str="det"
+if(stoch==1){
+    stoch_str="stoch"
+}
+printf("intensity: %f",intensity)
+
+titrate=2
+
+// run
+chdir("../")
+load_file("init.hoc")

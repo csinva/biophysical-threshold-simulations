@@ -1,0 +1,59 @@
+proc titrate_thresh(){
+    recur += 1
+    if(recur <= max_recurs){
+        lower = $1
+        target = $2
+        upper = $3
+        spike_target = $4
+        num_runs = $5
+        f_titrate.printf("titrating lower=%f target=%f upper=%f\n\t",lower,target,upper)
+        printf("titrating lower=%f target=%f upper=%f\n\t",lower,target,upper)
+        spike_count = 0
+        for j=1,num_runs{
+            dur = target
+            set_stim()
+            init_to_steady_state()
+            rand_seed(j)
+            x = run_till_spike()
+            spike_count += x
+            f_titrate.printf("%d ",x)
+            printf("%d ",x)
+        }
+
+        f_titrate.printf("\n\t%d / %d (target=%d/%d)\n",spike_count,num_runs,spike_target,num_runs)
+        printf("\n\t%d / %d (target=%d/%d)\n",spike_count,num_runs,spike_target,num_runs)
+        target_new = target
+        if(spike_count > spike_target){
+            upper = target
+            target_new = (lower+target)/2.0
+            titrate_thresh(lower,target_new,upper,spike_target,num_runs)
+        }
+        if(spike_count < spike_target){
+            lower = target
+            target_new = (upper+target)/2.0
+            titrate_thresh(lower,target_new,upper,spike_target,num_runs)
+        }
+    }
+}
+
+proc run_titrate(){
+    recur = 0
+    f_titrate = new File()
+    f_titrate.wopen(titrate_str)
+    titrate_thresh(0,(tstop-del)/2,tstop-del,2,4)
+    if(recur <= max_recurs){
+        recur = 0
+        if(upper-target_new > 5){
+            upper = target_new + 5
+        }
+        if(target_new-lower > 5){
+            lower = target_new - 5
+        }
+        titrate_thresh(lower,target_new,upper,5,10)
+    }
+    f_titrate.close()
+    f_titrate.wopen(titrate_final_str)
+    f_titrate.printf("intensity,target,spike_count,spike_target\n")
+    f_titrate.printf("%.5f,%.5f,%d,%d\n",intensity,target,spike_count,spike_target)
+    f_titrate.close()
+}

@@ -1,0 +1,6 @@
+Intensity (nA),Duration (ms),Fired Spikes (%),Voltage at max 2nd derive (mV),Time to max 2nd Deriv (ms),Voltage at stochastic threshold (mV),Time to stochastic threshold (ms)
+0.66,4.02,80.00,-30.00,16.48,-51.73,15.70
+0.68,6.54,66.00,-26.14,14.44,-52.12,13.77
+0.73,11.32,92.00,-23.02,11.43,-52.85,10.84
+0.94,14.84,88.00,-37.42,6.90,-53.08,6.62
+1.30,17.50,80.00,-26.06,4.49,-53.29,4.08

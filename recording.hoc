@@ -1,0 +1,240 @@
+/* -----------------------------------------------
+    Data Recording
+-------------------------------------------------*/
+
+/* Vectors Recording as Running  */
+objref rec_soma, rec_hill, rec_ais[10], rec_nakeaxon[9], rec_node0, rec_mat, rec_time, rec_k[100], rec_k_soma[10], rec_ik[100], rec_ik_soma[10], rec_kca_soma, rec_km_soma
+objref curr_sum_vec, ik_list
+proc record_basic(){
+    // soma
+    rec_soma= new Vector()
+    rec_soma.record(&soma.v(0.5))
+    for i=0,9{
+        rec_k_soma[i]= new Vector()
+        rec_k_soma[i].record(&soma.gk_kv(.1*i))
+        rec_ik_soma[i]= new Vector()
+        rec_ik_soma[i].record(&soma.ik(.1*i))
+    }
+    rec_km_soma= new Vector()
+    rec_km_soma.record(&soma.gk_km(0.5))
+    rec_kca_soma= new Vector()
+    rec_kca_soma.record(&soma.gk_kca(0.5))
+
+    // hill
+    rec_hill= new Vector()
+    rec_hill.record(&hill.v(.5))
+    // ais
+    for i=0,9 {
+      rec_ais[i]= new Vector()
+      rec_ais[i].record(&ais[i].v(.5))
+      }
+    for i=0,9 {
+        for j=0,9 {
+          x = i*10+j
+          rec_k[x]= new Vector()
+          rec_k[x].record(&ais[i].gk_kv(.1*j))
+          rec_ik[x]= new Vector()
+          rec_ik[x].record(&ais[i].ik(.1*j))
+        }
+      }
+    // nakeaxon
+    for i=1,9 {
+      rec_nakeaxon[i-1]= new Vector()
+      rec_nakeaxon[i-1].record(&nakeaxon.v(i*0.1))
+      }
+    // node
+    rec_node0= new Vector() 
+    rec_node0.record(&node[0].v(.5))
+    // time
+    rec_time = new Vector()
+    rec_time.record(&t)
+  }
+
+ proc normalize_k_vects(){
+  for i=0,9{
+    for j=0,9{
+        x = i*10+j
+        rec_k[x].div(ais[i].gbar_kv(.1*j))
+    }
+    rec_k_soma.div(soma.gbar_kv(.1*i))
+  }
+
+  rec_kca_soma.div(soma.gbar_kca(.5))
+  rec_km_soma.div(soma.gbar_km(.5))
+}
+
+proc sum_k_vects(){
+  for i=0,9 {
+    for j=1,9 {
+      x = i*10+j
+      rec_k[i*10].add(rec_k[i*10+j])
+      rec_ik[i*10].add(rec_ik[i*10+j])
+    }
+  }
+}
+
+/* Save to File */
+objref f
+proc save_basic() {
+  normalize_k_vects() // turn conductances into percentages
+  sum_k_vects()
+
+  rec_mat= new Matrix()
+  rec_mat.resize(rec_soma.size(),66)
+  // Set Matrix Column Values
+  rec_mat.setcol(0,rec_soma)
+  rec_mat.setcol(1,rec_hill)
+  for i=0,9 {
+    rec_mat.setcol(i+2,rec_ais[i])
+  }
+  for i=1,9 {
+    rec_mat.setcol(i+11, rec_nakeaxon[i-1])
+  }
+  rec_mat.setcol(21,rec_node0)
+  rec_mat.setcol(22,rec_time)
+  for i=0,9 {
+    rec_mat.setcol(23+i,rec_k[i*10])
+  }
+  for i=0,9 {
+    rec_mat.setcol(33+i,rec_k_soma[i])
+  }
+  for i=0,9 {
+    rec_mat.setcol(43+i,rec_ik_soma[i])
+  }
+  for i=0,9 {
+    rec_mat.setcol(53+i,rec_ik[i*10])
+  }
+  rec_mat.setcol(63,rec_kca_soma)
+  rec_mat.setcol(64,rec_km_soma)
+  rec_mat.setcol(65,curr_sum_vec)
+
+
+  f = new File()  //savdata is a file pointer
+  f.wopen(v_str)  //open a file with a defined name to save data
+  f.printf(" soma   hill   ais0    ais1    ais2    ais3    ais4    ais5    ais6    ais7    ais8    ais9   nake0.1    nake0.2    nake0.3    nake0.4    nake0.5    nake0.6    nake0.7    nake0.8    nake0.9    node[0]    t   k0  k1  k2  k3  k4  k5  k6  k7  k8  k9 k0_s k1_s    k2_s    k3_s    k4_s    k5_s    k6_s    k7_s    k8_s    k9_s     ik0_s  ik1_s   ik2_s   ik3_s   ik4_s   ik5_s   ik6_s   ik7_s   ik8_s   ik9_s   ik0 ik1 ik2 ik3 ik4 ik5 ik6 ik7 ik8 ik9 soma_km    soma_kca ik_sum\n")
+  f.printf("delay= %f\n",del)
+  f.printf("intensity= %f\n",intensity)
+  f.printf("dur= %f\n",dur)
+  rec_mat.fprint(f," %g")
+  f.close()
+  
+  printf("Traces saved.\n")
+}
+
+
+
+///////////////// chans ///////////////////
+/* Vectors Recording as Running  */
+objref rec_12_ais[100],rec_16_ais[100], rec_soma_chans[10], rec_mat_chans, rec_12_ais2[100],rec_16_ais2[100], rec_12_ais3[100],rec_16_ais3[100]
+proc recordV_chans(){
+  for i=0,9 {
+    for j=0,9 {
+      x = i*10+j
+      rec_12_ais[x]= new Vector()
+      rec_16_ais[x]= new Vector()
+      rec_12_ais[x].record(&ais[i].m3h0_na12_stoch(.1*j))
+      rec_16_ais[x].record(&ais[i].m3h0_na16_stoch(.1*j))
+
+      rec_12_ais2[x]= new Vector()
+      rec_16_ais2[x]= new Vector()
+      rec_12_ais2[x].record(&ais[i].m2h0_na12_stoch(.1*j))
+      rec_16_ais2[x].record(&ais[i].m2h0_na16_stoch(.1*j))
+
+      rec_12_ais3[x]= new Vector()
+      rec_16_ais3[x]= new Vector()
+      rec_12_ais3[x].record(&ais[i].m1h0_na12_stoch(.1*j))
+      rec_16_ais3[x].record(&ais[i].m1h0_na16_stoch(.1*j))
+    }
+    rec_soma_chans[i] = new Vector()
+    rec_soma_chans[i].record(&soma.m3h0_na_stoch(.1*i))
+  }
+}
+
+
+proc sum_vects(){
+  for i=0,9{
+    for j=1,9{
+        rec_12_ais[i*10].add(rec_12_ais[i*10+j])
+        rec_16_ais[i*10].add(rec_16_ais[i*10+j])
+
+        rec_12_ais2[i*10].add(rec_12_ais2[i*10+j])
+        rec_16_ais2[i*10].add(rec_16_ais2[i*10+j])
+
+        rec_12_ais3[i*10].add(rec_12_ais3[i*10+j])
+        rec_16_ais3[i*10].add(rec_16_ais3[i*10+j])
+    }
+  }
+  for i=1,9{
+    rec_soma_chans[0].add(rec_soma_chans[i])
+  }
+}
+
+/* Save to File */
+objref f_chans
+proc saveV_chans() {
+  sum_vects()
+  rec_mat_chans= new Matrix()
+  rec_mat_chans.resize(rec_12_ais.size(),61)
+  for i=0,9 {
+    rec_mat_chans.setcol(i,rec_12_ais[i*10])
+  }
+  for i=0,9 {
+    rec_mat_chans.setcol(i+10, rec_16_ais[i*10])
+  }
+
+  for i=0,9 {
+      rec_mat_chans.setcol(i+20,rec_12_ais2[i*10])
+    }
+    for i=0,9 {
+      rec_mat_chans.setcol(i+30, rec_16_ais2[i*10])
+    }
+
+  for i=0,9 {
+      rec_mat_chans.setcol(i+40,rec_12_ais3[i*10])
+    }
+    for i=0,9 {
+      rec_mat_chans.setcol(i+50, rec_16_ais3[i*10])
+    }
+
+
+  rec_mat_chans.setcol(60, rec_soma_chans[0])
+
+  f_chans = new File()  //savdata is a file pointer
+  f_chans.wopen(chans_str)  //open a file with a defined name to save data
+  f_chans.printf(" 12_0   12_1   12_2   12_3   12_4   12_5   12_6   12_7   12_8   12_9   16_0   16_1   16_2   16_3   16_4   16_5   16_6   16_7   16_8   16_9  12_20   12_21   12_22   12_23   12_24   12_25   12_26   12_27   12_28   12_29   16_20   16_21   16_22   16_23   16_24   16_25   16_26   16_27   16_28   16_29  12_30   12_31   12_32   12_33   12_34   12_35   12_36   12_37   12_38   12_39   16_30   16_31   16_32   16_33   16_34   16_35   16_36   16_37   16_38   16_39 soma_chans\n")
+  f_chans.printf("delay= %f\n",del)
+  rec_mat_chans.fprint(f_chans," %g")
+  f_chans.close()
+  print "saved to: ",chans_str
+}
+
+
+obfunc record_all_ik() { localobj tmpvec, tmplist
+  tmplist = new List()
+  forall{
+      for (x,0) {
+        tmpvec = new Vector()
+        tmpvec.record(&ik(x))
+        tmplist.append(tmpvec)
+      }
+  }
+  return tmplist
+}
+
+proc sum_and_save_all_ik(){ localobj l
+    T = ik_list.o(0).size()
+    num_secs = ik_list.count()
+    curr_sum_vec = new Vector(T)
+    curr_sum_vec.fill(0)
+    sec = 0
+    forall{
+        for(x,0){
+            surface_area_mult = area(x)/100
+            for i=0,T-1{
+                curr_sum_vec.x[i] +=ik_list.o(sec).x[i] *surface_area_mult
+            }
+            sec += 1
+        }
+    }
+//    print "sec ",sec," ",num_secs
+}

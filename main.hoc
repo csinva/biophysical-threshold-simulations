@@ -1,0 +1,148 @@
+objref somatodendritic, dendritic
+/* Global */
+  celsius   = 37
+  v_init = -70
+  
+/* Passive membrane */
+  ra        = 150  // decrease ad to decrease of soma vth variability, increase axon's vth variability
+  global_ra = ra
+  rm        = 30000   // g_pas=1/rm
+  c_m       = 0.5
+  cm_myelin = 0.02
+  g_pas_node = 0.02
+
+/* Active channels */
+  // Nav
+  Ena = 60
+  gna12_soma = 80
+  gna12_dend = 80 
+  gna12_ais_max = 3200   // Nav1.2 
+  gna16_ais_max = 3200   // Nav1.6
+  gna16_nakeaxon= 300    
+  gna12_myelin=20       // Nav1.2 at myelins
+  gna16_node = 3200     // Nav1.6 at node
+
+  // usetable
+  usetable=0
+  usetable_na=0
+  usetable_na12=0
+  usetable_na16=0
+  usetable_kca=0
+  usetable_km=0
+  usetable_kv=0
+
+  vhalf_na12 = -30
+  vhalf_na16 = -43
+  vhalf_na = -30
+  vhalf_na12_stoch = -30
+  vhalf_na16_stoch = -43
+  vhalf_na_stoch = -30
+  
+  // Kv
+  Ek = -90  
+  gkv_soma = 20
+  gkv_dend = 10 
+  gkv_axon = 1000
+  
+  // Km
+  gkm = .3
+  gkm_soma = gkm
+  
+  // Kca
+  gkca = 3
+  gkca_soma = gkca
+  
+  // Ca
+  Eca=140
+  gca = .3
+  gca_soma = gca
+
+  // gamma
+  gamma_na =  gamma
+  gamma_na12 = gamma
+  gamma_na16 = gamma
+  gamma_na_stoch = gamma
+  gamma_na12_stoch = gamma
+  gamma_na16_stoch = gamma
+
+// ------------------------------------------------
+//    Cell Geometry
+// ------------------------------------------------
+ 
+
+/* Clean up */  
+  forall delete_section()
+
+/* Soma and Dendrites */
+  load_file("morphology/soma_dendrites.hoc")
+
+  // build a sectionlist for soma and dendrites
+  somatodendritic = new SectionList()
+  forall {
+    if (L/nseg>40) {
+      nseg = L/40 + 1 
+    }    // make sure no segments exceed 40 uM length. Note, soma.nseg remains 10.
+    somatodendritic.append()  // soma and dendrites are all included
+  }
+
+    
+  // build a sectionlist for dendrites only
+  dendritic = new SectionList()
+  forsec somatodendritic dendritic.append()
+  soma  dendritic.remove()     // remove soma for pure dendritic sectionlist
+
+/* Axon */
+  axonOnSoma=1
+  load_file ("morphology/axon.hoc")
+  create_axon()
+
+  
+/* Spines */
+  aspiny = 0  // 0 for spiny
+  if (!aspiny) {
+    load_file ("morphology/spines.hoc")
+    add_spines(dendritic,spine_dens)
+  }
+  
+  distance(0,axonOnSoma)  // set the point where axon seated on soma as the origin
+
+
+// ----------------------------------------------------
+//  Insert Density Mechanisms
+// ----------------------------------------------------
+
+load_file ("density_mechs.hoc")
+
+// Install passive membrane properties
+install_passive()  
+printf("stoch,%d\n",stoch)
+// Install active channels
+//install_channels()
+if(stoch==0){
+    install_channels()
+}
+if(stoch==1){
+    install_channels_stoch()
+}
+
+    
+    
+  
+// -----------------------------------------------------------
+//  Experiments: Insert Point Processes or Something Else
+// -----------------------------------------------------------
+
+
+xopen("recording.hoc")
+// Call the Session "hu_all"
+xopen ("c.ses")
+
+/* Where Ini */
+xopen("inject_soma.hoc")
+
+
+  
+  
+  
+  
+  

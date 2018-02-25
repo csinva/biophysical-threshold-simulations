@@ -1,0 +1,88 @@
+objref stim, f_titrate
+load_file("titrate.hoc")
+load_file("init.hoc")
+    proc set_stim(){
+    access soma
+    stim=new IClamp(0.5)
+    stim.dur = dur
+    stim.del = del
+    stim.amp = intensity
+}
+
+proc init_to_steady_state() {
+    init()
+	access soma
+	finitialize(v_init)
+	fcurrent()
+	for i=0,9{
+	    access ais[i]
+	    finitialize(v_init)
+	    fcurrent()
+	}
+	saveDt = dt
+	dt = 1
+	for i=1,(del) advance()		//to speed up initialization
+	dt = saveDt
+}
+
+proc rand_seed(){
+    xx = $1+1
+    seed_na =   175+xx*7
+    seed_na12 = 357+xx*13
+    seed_na16 = 195+xx*17
+    seed_na_stoch = seed_na
+    seed_na12_stoch = seed_na12
+    seed_na16_stoch = seed_na16
+}
+
+func run_till_spike(){
+    above_zero=0
+    while (t <= tstop) {
+		continuerun(t + .5) stoprun=1
+		doNotify()
+		if(soma.v(.5)>0){
+		    above_zero=1
+		}
+		if(above_zero==1 && soma.v(.5)<0){
+//            printf("back below\n")
+            stoprun=1
+            break
+		}
+	}
+	return above_zero
+}
+
+proc run_main(){
+    record_basic()
+    if(stoch==1){
+        recordV_chans()
+    }
+    ik_list = record_all_ik()
+    rand_seed(cmd_trial_num)
+    set_stim()
+    init_to_steady_state()
+    run_till_spike()
+    sum_and_save_all_ik()
+    save_basic()
+    if(stoch==1){
+        saveV_chans()
+    }
+}
+
+proc run_act(){
+    rand_seed(cmd_trial_num)
+    set_stim()
+    init_to_steady_state()
+    run_till_spike()
+    //run()
+}
+
+if(titrate==1){
+    run_titrate()
+}
+if(titrate==0){
+    run_main()
+}
+if(titrate==2){
+    run_act()
+}
