@@ -3,12 +3,20 @@ trials_per_sweep = 1000
 sweep = int(cmd_trial_num/trials_per_sweep) + 1
 strdef folder,stoch_str,v_str,cmd_str,titrate_str,titrate_final_str,chans_str
 
-//////////// normal /////////////
-tstop = 50+25      // ms
-stoch = 1           // 1 for stochastic
+// normal parameters
+tstop = 50+25   // ms
+stoch = 1       // 1 for stochastic
 intensity = 1   // nA
-dur = tstop
+dur = tstop // set duration of current step
 gamma = 20e-12 // set pS/channel
+folder = "traces" // output folder
+
+// constant
+del = 50            // delay
+dt = 0.01 // ms
+soma_cm = .9
+
+// sweep-specific parameters
 if(sweep==1){
     intensity =.9
     dur =30
@@ -45,10 +53,8 @@ if(sweep==9){
     intensity = 1.30000
     dur = 3.97644
 }
-folder = "traces"
-//////////////////////////////////
 
-//////////// titrate /////////////
+// titrate parameters
 titrate = 0    // 1 for titrate
 double intensities[50]
 if(titrate==1){
@@ -63,13 +69,6 @@ if(titrate==1){
     stoch = 1
     folder = "titrate"
 }
-//////////////////////////////////
-
-
-// constant
-del = 50            // delay
-dt = 0.01 // ms
-soma_cm = .9
 
 // output
 stoch_str="det"
